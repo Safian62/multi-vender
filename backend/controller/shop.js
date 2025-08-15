@@ -86,7 +86,7 @@ router.post(
       activation_token,
       process.env.ACTIVATION_SECRET
     );
-    console.log("Decoded token:", newSeller);
+    // console.log("Decoded token:", newSeller);
 
     try {
       const newSeller = jwt.verify(
