@@ -146,9 +146,7 @@ router.post(
     }
   })
 );
-
-// LOAD OUT SHOP
-
+// LOAD OUR SHOP
 router.get(
   "/getSeller",
   isSeller,
@@ -162,6 +160,24 @@ router.get(
       resp.status(200).json({
         success: true,
         seller,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+// LOG OUT OUR SELLER / SHOP
+router.get(
+  "/logout",
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      resp.cookie("seller_token", null, {
+        expires: new Date(Date.now()),
+        httpOnly: true,
+      });
+      resp.status(201).json({
+        success: true,
+        message: "Logout successfully",
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));
