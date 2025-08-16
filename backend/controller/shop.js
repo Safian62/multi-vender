@@ -64,6 +64,7 @@ router.post("/create-shop", upload.single("file"), async (req, resp, next) => {
     resp.status(201).json({
       success: true,
       message: `Please check your email (${seller.email}) to activate your Shop.`,
+      activationUrl,
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
