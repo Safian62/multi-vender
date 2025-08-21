@@ -64,7 +64,6 @@ router.post("/create-shop", upload.single("file"), async (req, resp, next) => {
     resp.status(201).json({
       success: true,
       message: `Please check your email (${seller.email}) to activate your Shop.`,
-      activationUrl,
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
@@ -179,6 +178,23 @@ router.get(
       resp.status(201).json({
         success: true,
         message: "Logout successfully",
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+//GET SHOP INFO
+
+router.get(
+  "/get-shop-info/:id",
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      const shop = await Shop.findById(req.params.id);
+      resp.status(201).json({
+        success: true,
+        shop,
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 500));

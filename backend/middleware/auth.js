@@ -33,7 +33,6 @@ exports.isSeller= catchAsyncError(async (req, resp, next) => {
   } 
 
   const decoded = jwt.verify(seller_token, process.env.JWT_SECRET_KEY);
-console.log("Decoded token:", decoded);
 
   const shop = await Shop.findById(decoded.id);
 

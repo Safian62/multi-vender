@@ -1,30 +1,68 @@
 const Shop = require("../model/shop");
-const Cupon = require("../model/cupons");
+const Coupon = require("../model/cupons");
 const ErrorHandler = require("../utils/ErrorHandler");
 const express = require("express");
-const router = require("./product");
+const router = express.Router();
 const { isSeller } = require("../middleware/auth");
 const catchAsyncError = require("../middleware/catchAsyncError");
 
-// CREATE A CUPON CODE FOR DISCOUNT
+// CREATE A coupon CODE FOR DISCOUNT
 
 router.post(
-  "/create-cupon",
+  "/create-coupon",
   isSeller,
   catchAsyncError(async (req, resp, next) => {
     try {
-      const isCupon = await Cupon.find({ name: req.body.name });
-      if (isCupon) {
-        return next(new ErrorHandler("Cupon Code already exists!", 400));
+      const iscoupon = await Coupon.findOne({ name: req.body.name });
+      if (iscoupon) {
+        return next(new ErrorHandler("coupon Code already exists!", 400));
       }
 
-      const cupon = await Cupon.create(req.body);
+      const coupon = await Coupon.create(req.body);
       resp.status(201).json({
         success: true,
-        message: "Cupon Code created Successfully.",
+        message: "coupon Code created Successfully.",
+        coupon,
       });
     } catch (error) {
       return next(new ErrorHandler(error, 400));
     }
   })
 );
+
+// GET ALL couponS CODE
+
+router.get(
+  "/get-coupons/:id",
+  isSeller,
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      const coupons = await Coupon.find({ shop: req.params.id });
+      resp.status(201).json({
+        success: true,
+        coupons,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error, 400));
+    }
+  })
+);
+
+//  GET COUPN CODE VALUE BY NAME
+
+router.get(
+  "/get-coupon-value/:name",
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      const couponCode = await Coupon.findOne({ name: req.params.name });
+      resp.status(201).json({
+        success: true,
+        couponCode,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error, 400));
+    }
+  })
+);
+
+module.exports = router;

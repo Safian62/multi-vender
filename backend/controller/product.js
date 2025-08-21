@@ -54,6 +54,21 @@ router.get(
   })
 );
 
+// GET ALL PRODUCTS
+router.get('/get-all-products',async(req,resp,next)=>{
+  try {
+    const product = await Product.find();
+    resp.status(201).json({
+      success:true,
+      product
+    })
+    
+  } catch (error) {
+    return next(new ErrorHandler(error,400))
+    
+  }
+})
+
 // DELETE PRODUCT OF A SHOP
 router.delete(
   "/delete-shop-product/:id",
@@ -96,3 +111,4 @@ router.delete(
   })
 );
 module.exports = router;
+

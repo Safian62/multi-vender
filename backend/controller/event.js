@@ -7,7 +7,7 @@ const Event = require("../model/event");
 const { upload } = require("../multer");
 const { isSeller } = require("../middleware/auth");
 const fs = require("fs");
-const path = require("path");
+const path = require("path"); 
 
 // create event
 router.post(
@@ -38,7 +38,23 @@ router.post(
   })
 );
 
-// get all products of a shop
+// GET ALL EVENTS 
+
+router.get('/get-all-events',async(req,resp,next)=>{
+  try {
+    const events = await Event.find();
+    resp.status(201).json({
+      success:true,
+      events
+    })
+    
+  } catch (error) {
+    return next(new ErrorHandler(error,400))
+    
+  }
+})
+
+// get all event of a shop
 router.get(
   "/get-all-events/:id",
   catchAsyncErrors(async (req, res, next) => {
@@ -55,7 +71,7 @@ router.get(
   })
 );
 
-// delete product of shop
+// delete event of shop
 router.delete(
   "/delete-shop-event/:id",
   isSeller,

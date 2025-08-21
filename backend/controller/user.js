@@ -92,7 +92,6 @@ const createActivationToken = (user) => {
 };
 
 // ACTIVATE OUR USER
-
 router.post(
   "/activation",
   catchAsyncError(async (req, resp, next) => {
@@ -131,7 +130,6 @@ router.post(
 );
 
 // LOGIN USER
-
 router.post(
   "/login-user",
   catchAsyncError(async (req, resp, next) => {
@@ -159,7 +157,6 @@ router.post(
 );
 
 // LOAD USER
-
 router.get(
   "/getuser",
   isAuthenticated,
@@ -181,7 +178,6 @@ router.get(
 );
 
 // LOGOUT METHOD
-
 router.get(
   "/logout",
   isAuthenticated,
@@ -200,4 +196,162 @@ router.get(
     }
   })
 );
+
+// UPDATE USER DETAILS
+router.put(
+  "/update-user-info",
+  isAuthenticated,
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      const { email, password, phoneNumber, name } = req.body;
+      const user = await User.findOne({ email }).select("+password");
+      if (!user) {
+        return next(new ErrorHandler("User not found", 400));
+      }
+      const isPasswordValid = await user.comparePassword(password);
+      if (!isPasswordValid) {
+        return next(
+          new ErrorHandler("Please provide correct information", 400)
+        );
+      }
+
+      user.name = name;
+      user.email = email;
+      user.phoneNumber = user.phoneNumber;
+      await user.save();
+      resp.status(201).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// UPDATE USER AVATAR
+router.put(
+  "/update-avatar",
+  isAuthenticated,
+  upload.single("image"),
+  catchAsyncError(async (req, resp, next) => {
+    if (!req.file) {
+      return next(new ErrorHandler("No file uploaded", 400));
+    }
+
+    const existsUser = await User.findById(req.user.id);
+
+    // Delete old avatar if exists
+    if (existsUser.avatar && existsUser.avatar.url) {
+      const existsAvatarPath = path.join(
+        __dirname,
+        "..",
+        existsUser.avatar.url
+      );
+      fs.unlink(existsAvatarPath, (err) => {
+        if (err) console.log("Failed to delete old avatar:", err.message);
+      });
+    }
+
+    const fileUrl = `uploads/${req.file.filename}`; // save relative path
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { avatar: { url: fileUrl } }, // save as object
+      { new: true }
+    );
+
+    resp.status(200).json({ success: true, user });
+  })
+);
+
+// UPDATE USER ADDRESSES
+router.put(
+  "/update-user-addresses",
+  isAuthenticated,
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      const user = await User.findById(req.user.id);
+      const sameTypeAddress = user.addresses.find(
+        (address) => address.addressType === req.body.addressType
+      );
+      if (sameTypeAddress) {
+        return next(
+          new ErrorHandler(`${req.body.addressType} address already exists`)
+        );
+      }
+
+      const existAddress = user.addresses.find(
+        (address) => address._id === req.body._id
+      );
+      if (existAddress) {
+        Object.assign(existAddress, req.body);
+      } else {
+        // ADD THE NEW ADDRESS
+        user.addresses.push(req.body);
+      }
+
+      await user.save();
+      resp.status(200).json({
+        success: true,
+        user,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// DELETE USER ADDRESS
+router.delete(
+  "/delete-user-address/:id",
+  isAuthenticated,
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      const userId = req.user._id;
+      const addressId = req.params.id.replace(/^:/, "");
+      await User.updateOne(
+        {
+          _id: userId,
+        },
+        { $pull: { addresses: { _id: addressId } } }
+      );
+      const user = await User.findById(userId);
+      resp.status(200).json({ success: true, user });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
+// UPDATE USER PASSWORD
+
+router.put(
+  "/update-user-password",
+  isAuthenticated,
+  catchAsyncError(async (req, resp, next) => {
+    try {
+      const user = await User.findById(req.user.id).select("+password");
+
+      isPasswordMatch = await user.comparePassword(req.body.oldPassword);
+      if (!isPasswordMatch) {
+        return next(new ErrorHandler("Old passord is incorrect!", 400));
+      }
+
+      if (req.body.newPassword !== req.body.confirmPassword) {
+        return next(new ErrorHandler("Password does not match!", 400));
+      }
+
+      user.password = req.body.newPassword;
+
+      await user.save();
+      resp.status(200).json({
+        success: true,
+        message: "Password updated successfully",
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
 module.exports = router;
